@@ -18,15 +18,25 @@ export default function FeedPage() {
       </header>
 
       <div className="space-y-6">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
+        {posts.length > 0 ? (
+          posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))
+        ) : (
+          <div className="py-16 text-center">
+            <div className="text-6xl mb-4">🌵</div>
+            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">¡No hay nada acá!</h3>
+            <p className="text-[var(--text-secondary)]">Solo se escucha el eco... Sube algunas fotos o únete a una galería para darle vida a esto.</p>
+          </div>
+        )}
       </div>
 
-      <div className="py-8 text-center text-[var(--text-secondary)]">
-        <div className="inline-block w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-2 text-sm">Loading more posts...</p>
-      </div>
+      {posts.length > 0 && (
+        <div className="py-8 text-center text-[var(--text-secondary)]">
+          <div className="inline-block w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-2 text-sm">Cargando más momentos...</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,183 +1,130 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { UploadCloud, X, MapPin, Hash, Lock, Globe } from "lucide-react";
-export default function CreatePostPage() {
+import { ArrowLeft, Calendar, Download, Copy, Lock, Unlock, Rocket } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
+
+export default function CreateGalleryPage() {
   const router = useRouter();
-  const [images, setImages] = useState<string[]>([]);
-  const [caption, setCaption] = useState("");
-  const [hashtags, setHashtags] = useState("");
-  const [location, setLocation] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { userData } = useAuth();
+  const [eventName, setEventName] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(Array.from(e.dataTransfer.files));
-    }
-  };
-
-  const handleFiles = (files: File[]) => {
-    // For UI demonstration, we create local object URLs
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setImages(prev => [...prev, ...newImages].slice(0, 10)); // Max 10 images
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async () => {
-    if (images.length === 0) return;
-    setIsUploading(true);
-
-    // Simulate API call to Google Drive + Firestore
+  const handleCreate = async () => {
+    setIsCreating(true);
+    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
-
-    setIsUploading(false);
+    setIsCreating(false);
     router.push("/feed");
   };
 
   return (
-    <div className="max-w-3xl mx-auto pt-6 px-4 sm:px-6 mb-20 md:mb-0">
-      <header className="mb-8">
-        <h1 className="text-3xl font-heading font-bold text-[var(--text-primary)]">Create a Snapi</h1>
-        <p className="text-[var(--text-secondary)] mt-1">Create a gallery.</p>
+    <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--text-primary)] font-sans pb-24 transition-colors duration-300">
+      {/* Top Navigation Anchor */}
+      <header className="bg-[var(--surface-dim)] sticky top-0 z-40 shadow-sm flex justify-between items-center w-full px-4 h-16 transition-colors duration-300">
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.back()} className="active:scale-95 transition-transform duration-150 p-2 hover:bg-[var(--primary)]/20 rounded-full">
+            <ArrowLeft className="w-6 h-6 text-[var(--primary)]" />
+          </button>
+          <h1 className="text-[28px] leading-[36px] font-semibold text-[var(--primary)] tracking-tight">Crear Nueva Galería</h1>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-[var(--surface)] border border-[var(--outline)]/30 flex items-center justify-center overflow-hidden">
+          {userData?.photoURL ? (
+            <img alt="User" className="w-full h-full object-cover" src={userData.photoURL} />
+          ) : (
+            <div className="w-full h-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] font-bold">
+              {userData?.displayName?.charAt(0) || "U"}
+            </div>
+          )}
+        </div>
       </header>
 
-      <div className="bg-[var(--surface)] border border-[var(--outline)]/20 rounded-2xl p-6 shadow-sm">
-        {/* Upload Area */}
-        <div
-          className={`border-2 border-dashed rounded-xl p-8 mb-6 text-center transition-colors cursor-pointer
-            ${isDragging ? "border-[var(--primary)] bg-[var(--primary-container)]/50" : "border-[var(--outline)]/40 hover:border-[var(--primary)]/50"}
-            ${images.length > 0 ? "hidden" : "block"}
-          `}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={(e) => e.target.files && handleFiles(Array.from(e.target.files))}
-          />
-          <UploadCloud className="w-12 h-12 text-[var(--primary)] mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-1">Drag and drop photos</h3>
-          <p className="text-sm text-[var(--text-secondary)]">or click to browse from your device</p>
-          <p className="text-xs text-[var(--text-secondary)]/70 mt-4">High quality JPEGs, PNGs up to 20MB</p>
-        </div>
-
-        {/* Previews */}
-        {images.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-[var(--text-primary)]">Selected Photos ({images.length}/10)</h3>
-              <button onClick={() => fileInputRef.current?.click()} className="text-sm text-[var(--primary)] hover:underline">
-                Add more
-              </button>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
-              {images.map((url, i) => (
-                <div key={i} className="relative flex-shrink-0 w-32 h-32 rounded-xl overflow-hidden group">
-                  <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => removeImage(i)}
-                    className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Details Form */}
-        <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Caption</label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              className="w-full h-24 rounded-md border border-[var(--outline)]/40 bg-transparent px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] resize-none"
-              placeholder="Tell the story behind this shot..."
+      {/* Main Content Canvas */}
+      <main className="flex-1 max-w-xl mx-auto w-full px-4 py-8 space-y-8">
+        {/* Form Section */}
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <label className="text-[14px] font-medium text-[var(--text-primary)]" htmlFor="event-name">Nombre del Evento</label>
+            <input 
+              className="w-full h-12 px-4 bg-[var(--background)] border border-[var(--outline)]/50 rounded-lg focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all placeholder:text-[var(--text-secondary)]/50 text-[var(--text-primary)]" 
+              id="event-name" 
+              placeholder="Ej: Boda de Ana y Luis" 
+              type="text"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
             />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1 flex items-center gap-1">
-                <Hash className="w-4 h-4" /> Hashtags
-              </label>
-              <Input
-                value={hashtags}
-                onChange={(e) => setHashtags(e.target.value)}
-                placeholder="e.g. #nature #portrait"
-                className="border-[var(--outline)]/40"
+          <div className="space-y-3">
+            <label className="text-[14px] font-medium text-[var(--text-primary)]" htmlFor="event-date">Fecha del Evento</label>
+            <div className="relative">
+              <input 
+                className="w-full h-12 px-4 bg-[var(--background)] border border-[var(--outline)]/50 rounded-lg focus:outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] transition-all placeholder:text-[var(--text-secondary)]/50 text-[var(--text-primary)]" 
+                id="event-date" 
+                placeholder="DD / MM / AAAA" 
+                type="text"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1 flex items-center gap-1">
-                <MapPin className="w-4 h-4" /> Location (Optional)
-              </label>
-              <Input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Add location"
-                className="border-[var(--outline)]/40"
-              />
+              <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] w-5 h-5" />
             </div>
           </div>
+        </section>
 
-          <div className="flex items-center justify-between pt-4 border-t border-[var(--outline)]/10">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-[var(--text-primary)]">Privacy</span>
-              <div className="flex bg-[var(--surface-dim)] p-1 rounded-lg">
-                <button
-                  onClick={() => setIsPrivate(false)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${!isPrivate ? "bg-[var(--surface)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-secondary)]"}`}
-                >
-                  <Globe className="w-4 h-4" /> Public
-                </button>
-                <button
-                  onClick={() => setIsPrivate(true)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm transition-colors ${isPrivate ? "bg-[var(--surface)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-secondary)]"}`}
-                >
-                  <Lock className="w-4 h-4" /> Private
-                </button>
+        {/* Access & QR Section */}
+        <section className="bg-[var(--surface-dim)] rounded-xl p-6 border border-[var(--outline)]/30 shadow-sm space-y-6 transition-colors duration-300">
+          <div className="text-center space-y-2">
+            <p className="text-[14px] font-medium text-[var(--text-secondary)] uppercase tracking-widest">Código de Acceso</p>
+            <h2 className="text-[48px] font-bold text-[var(--primary)] select-all tracking-tight">SNAPI-2024-X</h2>
+          </div>
+          <div className="flex flex-col items-center gap-6">
+            <div className="p-2 bg-[var(--surface)] rounded-xl shadow-sm border border-[var(--outline)]/20">
+              <img alt="QR Code Link" className="w-48 h-48 rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjjwz8o6Kh_TdaiWYFnVp2FfPMWCKMfeFFkLtwXdRyQPmNp6IK8tf5LIZSgzHygzwDXjGrL-z5Mmfl9qtTaXubpPOTUev9I96OTueN7A4pxHc3BAAS-BdXd7avv7FhZXwzBsuipZt7a28UIFwX0h84MvDDeGQ_-l08uuWEodLY9itpgvLxpHFfQqOsZ61l1QlPHjY5x60cBgcKx_fZNE1-xufNszSQ3feer3a4c1_uFsiR_zBDXdHyF5IQlDkvvCxEcbKlNT6l5J6w"/>
+            </div>
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <button className="flex items-center justify-center gap-2 h-12 bg-[var(--background)] border border-[var(--primary)] text-[var(--primary)] text-[14px] font-medium rounded-lg hover:bg-[var(--primary)]/10 active:scale-95 transition-all">
+                <Download className="w-5 h-5" />
+                Descargar QR
+              </button>
+              <button className="flex items-center justify-center gap-2 h-12 bg-[var(--background)] border border-[var(--primary)] text-[var(--primary)] text-[14px] font-medium rounded-lg hover:bg-[var(--primary)]/10 active:scale-95 transition-all">
+                <Copy className="w-5 h-5" />
+                Copiar Enlace
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Advanced Options Bento */}
+        <section className="grid grid-cols-1 gap-4">
+          <div className="flex items-center justify-between p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 cursor-pointer" onClick={() => setIsPublic(!isPublic)}>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 dark:bg-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
+                {isPublic ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+              </div>
+              <div>
+                <p className="text-[20px] leading-[28px] font-bold text-[var(--text-primary)]">Privacidad {isPublic ? 'Pública' : 'Privada'}</p>
+                <p className="text-[11px] font-medium text-[var(--text-secondary)]">{isPublic ? 'Cualquiera con el código puede subir fotos' : 'Solo invitados pueden subir fotos'}</p>
               </div>
             </div>
-
-            <Button
-              onClick={handleSubmit}
-              disabled={images.length === 0 || isUploading}
-              className="px-8"
-            >
-              {isUploading ? "Publishing..." : "Share Post"}
-            </Button>
+            <div className={`w-12 h-6 rounded-full relative p-1 transition-colors ${isPublic ? 'bg-[var(--primary)]' : 'bg-[var(--surface-dim)] border border-[var(--outline)]/50'}`}>
+              <div className={`w-4 h-4 bg-[var(--on-primary)] rounded-full absolute transition-all ${isPublic ? 'right-1' : 'left-1'}`}></div>
+            </div>
           </div>
-        </div>
+        </section>
+      </main>
+
+      {/* Fixed Bottom Action */}
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-[var(--background)]/80 backdrop-blur-md border-t border-[var(--outline)]/20 flex flex-col items-center z-50">
+        <button 
+          onClick={handleCreate}
+          disabled={isCreating}
+          className="w-full max-w-xl h-14 bg-[var(--primary)] text-[var(--on-primary)] text-[16px] font-semibold rounded-lg shadow-lg hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-4 disabled:opacity-70"
+        >
+          {isCreating ? 'Creando...' : 'Crear Galería'}
+          {!isCreating && <Rocket className="w-5 h-5" />}
+        </button>
       </div>
     </div>
   );
